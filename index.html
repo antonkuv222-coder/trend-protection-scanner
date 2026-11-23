@@ -1,0 +1,465 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trend Protection Scanner</title>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+  background: #f5f5f5;
+  font-family: Arial, sans-serif;
+  color: #151515;
+}
+
+.container {
+  max-width: 550px;
+  margin: 0 auto;
+}
+
+.header {
+  background: linear-gradient(120deg,#fff 45%,#ffda00);
+  padding: 25px;
+  border-radius: 22px;
+  margin-bottom: 20px;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 1000;
+  margin-bottom: 24px;
+}
+
+h1 {
+  font-size: 29px;
+  line-height: 1;
+  margin: 0;
+}
+
+.card {
+  background: white;
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.05);
+}
+
+.description {
+  color: #777;
+  line-height: 1.5;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+#reader {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+#reader video {
+  width: 100% !important;
+  object-fit: cover !important;
+}
+
+button {
+  width: 100%;
+  border: 0;
+  border-radius: 13px;
+  padding: 17px;
+  background: #ffda00;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  margin-top: 14px;
+}
+
+button.dark {
+  background: #222;
+  color: white;
+}
+
+.status {
+  text-align: center;
+  padding: 16px 5px;
+  font-size: 14px;
+  color: #777;
+  line-height: 1.5;
+}
+
+.error {
+  background: #ffe7e7;
+  color: #b00020;
+  padding: 14px;
+  border-radius: 12px;
+  margin-top: 15px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.success {
+  background: #e5f8e9;
+  color: #167532;
+  padding: 14px;
+  border-radius: 12px;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.footer {
+  text-align: center;
+  color: #999;
+  font-size: 11px;
+  padding: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="logo">◆ MOBILE TREND</div>
+    <h1>TREND<br>PROTECTION</h1>
+  </div>
+
+  <div class="card">
+
+    <h2>Сканування товару</h2>
+
+    <div class="description">
+      Наведіть задню камеру смартфона на штрихкод товару Mobile Trend.
+      Після зчитування автоматично повернемо вас до калькулятора.
+    </div>
+
+    <div id="reader"></div>
+
+    <div class="status" id="status">
+      Підготовка камери...
+    </div>
+
+    <div id="message"></div>
+
+    <button
+      id="startButton"
+      onclick="startScanner()"
+      hidden
+    >
+      УВІМКНУТИ КАМЕРУ
+    </button>
+
+    <button class="dark" onclick="goBack()">
+      ПОВЕРНУТИСЯ ДО КАЛЬКУЛЯТОРА
+    </button>
+
+  </div>
+
+  <div class="footer">
+    MOBILE TREND © TREND PROTECTION
+  </div>
+
+</div>
+
+<script>
+
+let scanner = null;
+let running = false;
+let locked = false;
+
+const params = new URLSearchParams(
+  window.location.search
+);
+
+const returnUrl = params.get('return');
+
+
+// ПЕРЕВІРКА АДРЕСИ ПОВЕРНЕННЯ
+
+function getReturnUrl() {
+
+  if (!returnUrl) return null;
+
+  try {
+
+    const url = new URL(returnUrl);
+
+    if (
+      url.protocol !== 'https:' ||
+      url.hostname !== 'script.google.com' ||
+      !url.pathname.startsWith('/macros/s/') ||
+      !url.pathname.endsWith('/exec')
+    ) {
+      return null;
+    }
+
+    return url.origin + url.pathname;
+
+  } catch (e) {
+
+    return null;
+
+  }
+
+}
+
+
+// ПОВІДОМЛЕННЯ
+
+function showError(text) {
+
+  const element = document.getElementById('message');
+
+  element.className = 'error';
+  element.textContent = text;
+
+}
+
+
+// ПОВЕРНЕННЯ ДО КАЛЬКУЛЯТОРА
+
+function goBack() {
+
+  const url = getReturnUrl();
+
+  if (url) {
+
+    window.location.replace(url);
+
+  } else {
+
+    history.back();
+
+  }
+
+}
+
+
+// ЗАПУСК КАМЕРИ
+
+async function startScanner() {
+
+  if (running || locked) return;
+
+  const status = document.getElementById('status');
+
+  const button = document.getElementById('startButton');
+
+  button.hidden = true;
+
+  if (
+    !window.isSecureContext ||
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ) {
+
+    showError(
+      'Браузер не надає доступу до камери. ' +
+      'Відкрийте сторінку в Safari або Chrome ' +
+      'та перевірте дозволи камери.'
+    );
+
+    button.hidden = false;
+    button.textContent = 'СПРОБУВАТИ ЩЕ РАЗ';
+
+    return;
+
+  }
+
+  try {
+
+    status.textContent = 'Запит дозволу на камеру...';
+
+    if (!scanner) {
+
+      scanner = new Html5Qrcode('reader', {
+
+        formatsToSupport: [
+
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.ITF
+
+        ],
+
+        verbose: false
+
+      });
+
+    }
+
+    await scanner.start(
+
+      { facingMode: 'environment' },
+
+      {
+        fps: 12,
+
+        qrbox: function(width, height) {
+
+          return {
+            width: Math.floor(Math.min(width * 0.9, 420)),
+            height: Math.floor(Math.min(height * 0.55, 180))
+          };
+
+        },
+
+        aspectRatio: 1.777
+      },
+
+      async function(decodedText) {
+
+        if (locked) return;
+
+        locked = true;
+
+        status.textContent =
+          'Штрихкод зчитано. Повертаємося до калькулятора...';
+
+        try {
+
+          await stopScanner();
+
+        } catch (e) {}
+
+        const url = getReturnUrl();
+
+        if (!url) {
+
+          showError(
+            'Не вдалося визначити адресу калькулятора. ' +
+            'Поверніться назад і повторіть сканування.'
+          );
+
+          locked = false;
+
+          return;
+
+        }
+
+        const destination =
+          url + '?barcode=' + encodeURIComponent(decodedText);
+
+        window.location.replace(destination);
+
+      },
+
+      function() {}
+
+    );
+
+    running = true;
+
+    status.textContent =
+      'Камера активна. Наведіть її на штрихкод.';
+
+  } catch (error) {
+
+    running = false;
+
+    let message = 'Не вдалося відкрити камеру.';
+
+    if (error.name === 'NotAllowedError') {
+
+      message =
+        'Доступ до камери заборонено. Дозвольте використання камери в налаштуваннях браузера.';
+
+    } else if (error.name === 'NotFoundError') {
+
+      message = 'Камеру смартфона не знайдено.';
+
+    } else if (error.name === 'NotReadableError') {
+
+      message =
+        'Камера зайнята іншою програмою. Закрийте інші програми, що використовують камеру.';
+
+    } else if (error.name === 'OverconstrainedError') {
+
+      message =
+        'Не вдалося запустити задню камеру. Спробуйте інший браузер.';
+
+    } else if (error.message) {
+
+      message += ' ' + error.message;
+
+    }
+
+    showError(message);
+
+    status.textContent = 'Камера не запущена.';
+
+    button.hidden = false;
+    button.textContent = 'СПРОБУВАТИ ЩЕ РАЗ';
+
+  }
+
+}
+
+
+// ЗУПИНКА КАМЕРИ
+
+async function stopScanner() {
+
+  if (scanner && running) {
+
+    await scanner.stop();
+
+    running = false;
+
+  }
+
+}
+
+
+// ЗАКРИТТЯ СТОРІНКИ
+
+window.addEventListener('pagehide', function() {
+
+  if (scanner && running) {
+
+    scanner.stop().catch(function() {});
+
+  }
+
+});
+
+
+// АВТОЗАПУСК
+
+window.addEventListener('load', function() {
+
+  if (!getReturnUrl()) {
+
+    showError(
+      'Не передано адресу повернення до калькулятора. ' +
+      'Відкрийте сканер через кнопку в Trend Protection.'
+    );
+
+    document.getElementById('status').textContent =
+      'Очікується правильне відкриття сканера.';
+
+    return;
+
+  }
+
+  startScanner();
+
+});
+
+</script>
+
+</body>
+</html>
