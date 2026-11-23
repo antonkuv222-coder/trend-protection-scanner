@@ -9,9 +9,7 @@
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <style>
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -64,11 +62,19 @@ h1 {
   width: 100%;
   overflow: hidden;
   border-radius: 14px;
+  background: #111;
+  min-height: 240px;
 }
 
 #reader video {
   width: 100% !important;
-  object-fit: cover !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+#reader__dashboard,
+#reader__status_span {
+  display: none !important;
 }
 
 button {
@@ -86,6 +92,10 @@ button {
 button.dark {
   background: #222;
   color: white;
+}
+
+button:disabled {
+  opacity: .5;
 }
 
 .status {
@@ -113,6 +123,7 @@ button.dark {
   border-radius: 12px;
   margin-top: 15px;
   font-size: 14px;
+  line-height: 1.5;
 }
 
 .footer {
@@ -120,6 +131,16 @@ button.dark {
   color: #999;
   font-size: 11px;
   padding: 20px;
+}
+
+@media(max-width:480px) {
+  body { padding: 12px; }
+
+  .header { padding: 22px; }
+
+  .card { padding: 17px; }
+
+  #reader { min-height: 250px; }
 }
 </style>
 </head>
@@ -140,6 +161,7 @@ button.dark {
     <div class="description">
       Наведіть задню камеру смартфона на штрихкод товару Mobile Trend.
       Після зчитування автоматично повернемо вас до калькулятора.
+      Тримайте смартфон нерухомо та забезпечте достатнє освітлення.
     </div>
 
     <div id="reader"></div>
@@ -150,11 +172,7 @@ button.dark {
 
     <div id="message"></div>
 
-    <button
-      id="startButton"
-      onclick="startScanner()"
-      hidden
-    >
+    <button id="startButton" onclick="startScanner()" hidden>
       УВІМКНУТИ КАМЕРУ
     </button>
 
@@ -175,11 +193,9 @@ button.dark {
 let scanner = null;
 let running = false;
 let locked = false;
+let lastCode = '';
 
-const params = new URLSearchParams(
-  window.location.search
-);
-
+const params = new URLSearchParams(window.location.search);
 const returnUrl = params.get('return');
 
 
@@ -204,7 +220,7 @@ function getReturnUrl() {
 
     return url.origin + url.pathname;
 
-  } catch (e) {
+  } catch(e) {
 
     return null;
 
@@ -224,37 +240,68 @@ function showError(text) {
 
 }
 
+function showSuccess(text) {
 
-// ПОВЕРНЕННЯ ДО КАЛЬКУЛЯТОРА
+  const element = document.getElementById('message');
+
+  element.className = 'success';
+  element.textContent = text;
+
+}
+
+
+// ПОВЕРНЕННЯ
 
 function goBack() {
 
   const url = getReturnUrl();
 
   if (url) {
-
     window.location.replace(url);
-
   } else {
-
     history.back();
-
   }
 
 }
 
 
-// ЗАПУСК КАМЕРИ
+// ФОРМАТИ ШТРИХКОДІВ
+
+function getFormats() {
+
+  return [
+
+    Html5QrcodeSupportedFormats.CODE_128,
+    Html5QrcodeSupportedFormats.CODE_39,
+    Html5QrcodeSupportedFormats.CODE_93,
+
+    Html5QrcodeSupportedFormats.EAN_13,
+    Html5QrcodeSupportedFormats.EAN_8,
+
+    Html5QrcodeSupportedFormats.UPC_A,
+    Html5QrcodeSupportedFormats.UPC_E,
+
+    Html5QrcodeSupportedFormats.ITF,
+    Html5QrcodeSupportedFormats.CODABAR
+
+  ];
+
+}
+
+
+// ЗАПУСК СКАНЕРА
 
 async function startScanner() {
 
   if (running || locked) return;
 
   const status = document.getElementById('status');
-
   const button = document.getElementById('startButton');
 
   button.hidden = true;
+
+  document.getElementById('message').textContent = '';
+  document.getElementById('message').className = '';
 
   if (
     !window.isSecureContext ||
@@ -263,9 +310,8 @@ async function startScanner() {
   ) {
 
     showError(
-      'Браузер не надає доступу до камери. ' +
-      'Відкрийте сторінку в Safari або Chrome ' +
-      'та перевірте дозволи камери.'
+      'Браузер не підтримує доступ до камери. ' +
+      'Відкрийте сканер через Safari або Chrome.'
     );
 
     button.hidden = false;
@@ -277,23 +323,13 @@ async function startScanner() {
 
   try {
 
-    status.textContent = 'Запит дозволу на камеру...';
+    status.textContent = 'Запуск камери...';
 
     if (!scanner) {
 
       scanner = new Html5Qrcode('reader', {
 
-        formatsToSupport: [
-
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.ITF
-
-        ],
+        formatsToSupport: getFormats(),
 
         verbose: false
 
@@ -306,58 +342,23 @@ async function startScanner() {
       { facingMode: 'environment' },
 
       {
-        fps: 12,
 
-        qrbox: function(width, height) {
+        fps: 20,
 
-          return {
-            width: Math.floor(Math.min(width * 0.9, 420)),
-            height: Math.floor(Math.min(height * 0.55, 180))
-          };
+        disableFlip: false
 
-        },
-
-        aspectRatio: 1.777
-      },
-
-      async function(decodedText) {
-
-        if (locked) return;
-
-        locked = true;
-
-        status.textContent =
-          'Штрихкод зчитано. Повертаємося до калькулятора...';
-
-        try {
-
-          await stopScanner();
-
-        } catch (e) {}
-
-        const url = getReturnUrl();
-
-        if (!url) {
-
-          showError(
-            'Не вдалося визначити адресу калькулятора. ' +
-            'Поверніться назад і повторіть сканування.'
-          );
-
-          locked = false;
-
-          return;
-
-        }
-
-        const destination =
-          url + '?barcode=' + encodeURIComponent(decodedText);
-
-        window.location.replace(destination);
+        // qrbox навмисно не задаємо:
+        // аналізується все зображення камери.
+        // Це особливо важливо для довгих штрихкодів.
 
       },
 
-      function() {}
+      onScanSuccess,
+
+      function() {
+        // Відсутність розпізнавання в окремому кадрі
+        // не є помилкою камери.
+      }
 
     );
 
@@ -366,7 +367,11 @@ async function startScanner() {
     status.textContent =
       'Камера активна. Наведіть її на штрихкод.';
 
-  } catch (error) {
+    showSuccess(
+      'Сканер готовий. Розташуйте штрихкод по центру камери.'
+    );
+
+  } catch(error) {
 
     running = false;
 
@@ -375,7 +380,7 @@ async function startScanner() {
     if (error.name === 'NotAllowedError') {
 
       message =
-        'Доступ до камери заборонено. Дозвольте використання камери в налаштуваннях браузера.';
+        'Доступ до камери заборонено. Дозвольте камеру в налаштуваннях браузера.';
 
     } else if (error.name === 'NotFoundError') {
 
@@ -409,22 +414,64 @@ async function startScanner() {
 }
 
 
-// ЗУПИНКА КАМЕРИ
+// ОБРОБКА РОЗПІЗНАНОГО ШТРИХКОДУ
 
-async function stopScanner() {
+async function onScanSuccess(decodedText) {
 
-  if (scanner && running) {
+  if (locked || !decodedText) return;
 
-    await scanner.stop();
+  const code = String(decodedText).trim();
+
+  if (!code || code === lastCode) return;
+
+  lastCode = code;
+  locked = true;
+
+  const status = document.getElementById('status');
+
+  status.textContent = 'Штрихкод успішно зчитано!';
+
+  showSuccess('Код: ' + code + '. Повертаємося до калькулятора...');
+
+  try {
+
+    if (scanner && running) {
+      await scanner.stop();
+      running = false;
+    }
+
+  } catch(e) {
 
     running = false;
 
   }
 
+  const url = getReturnUrl();
+
+  if (!url) {
+
+    showError(
+      'Не вдалося визначити адресу калькулятора. Поверніться назад.'
+    );
+
+    locked = false;
+    return;
+
+  }
+
+  const destination =
+    url + '?barcode=' + encodeURIComponent(code);
+
+  setTimeout(function() {
+
+    window.location.replace(destination);
+
+  }, 300);
+
 }
 
 
-// ЗАКРИТТЯ СТОРІНКИ
+// ЗАКРИТТЯ КАМЕРИ
 
 window.addEventListener('pagehide', function() {
 
