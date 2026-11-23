@@ -68,18 +68,30 @@ h1 {
 #video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 
 .scan-frame {
   position: absolute;
-  left: 8%;
-  right: 8%;
-  top: 35%;
-  height: 30%;
+  left: 5%;
+  right: 5%;
+  top: 37%;
+  height: 26%;
   border: 3px solid #ffda00;
   border-radius: 12px;
+  pointer-events: none;
+  box-shadow: 0 0 0 100vmax rgba(0,0,0,.12);
+}
+
+.scan-line {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 50%;
+  height: 2px;
+  background: #ffda00;
+  opacity: .8;
   pointer-events: none;
 }
 
@@ -108,8 +120,24 @@ button.dark {
   color: white;
 }
 
+button.secondary {
+  background: #eee;
+  color: #222;
+}
+
 button:disabled {
   opacity: .5;
+}
+
+.tools {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.tools button {
+  font-size: 13px;
+  padding: 14px 8px;
 }
 
 .error {
@@ -130,6 +158,27 @@ button:disabled {
   margin-top: 15px;
   font-size: 14px;
   line-height: 1.5;
+}
+
+.manual {
+  margin-top: 15px;
+  display: flex;
+  gap: 8px;
+}
+
+.manual input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 13px;
+  font-size: 16px;
+}
+
+.manual button {
+  width: auto;
+  margin: 0;
+  padding: 13px;
 }
 
 .footer {
@@ -161,13 +210,17 @@ button:disabled {
     <h2>Сканування товару</h2>
 
     <div class="description">
-      Наведіть задню камеру смартфона на штрихкод товару Mobile Trend.
-      Після зчитування автоматично повернемо вас до калькулятора.
+      Наведіть задню камеру смартфона на штрихкод
+      товару Mobile Trend. Розмістіть усі лінії
+      штрихкоду в жовтій рамці.
+      Після зчитування ви автоматично повернетеся
+      до калькулятора.
     </div>
 
     <div class="camera-box">
       <video id="video" autoplay muted playsinline></video>
       <div class="scan-frame"></div>
+      <div class="scan-line"></div>
     </div>
 
     <div class="status" id="status">
@@ -179,6 +232,36 @@ button:disabled {
     <button id="startButton" onclick="startScanner()" hidden>
       УВІМКНУТИ КАМЕРУ
     </button>
+
+    <div class="tools">
+      <button class="secondary" id="torchButton"
+              onclick="toggleTorch()" disabled>
+        ЛІХТАРИК
+      </button>
+
+      <button class="secondary" id="zoomButton"
+              onclick="toggleZoom()" disabled>
+        ЗБІЛЬШЕННЯ
+      </button>
+    </div>
+
+    <button class="secondary" onclick="openPhoto()">
+      СКАНУВАТИ З ФОТО
+    </button>
+
+    <input type="file"
+           id="photoInput"
+           accept="image/*"
+           hidden
+           onchange="scanPhoto(event)">
+
+    <div class="manual">
+      <input id="manualCode"
+             type="text"
+             inputmode="numeric"
+             placeholder="Ввести код вручну">
+      <button onclick="submitManual()">OK</button>
+    </div>
 
     <button class="dark" onclick="goBack()">
       ПОВЕРНУТИСЯ ДО КАЛЬКУЛЯТОРА
@@ -192,67 +275,356 @@ button:disabled {
 
 </div>
 
-<script>
+<script type="module">
+
+import {
+  BrowserMultiFormatReader
+} from "https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/+esm";
+
+import {
+  DecodeHintType,
+  BarcodeFormat
+} from "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/+esm";
 
 let reader = null;
 let controls = null;
 let locked = false;
 let starting = false;
+let torchOn = false;
+let zoomOn = false;
+let currentTrack = null;
 
 const params = new URLSearchParams(location.search);
-const returnUrl = params.get('return');
+const returnUrl = params.get("return");
 
+const video = document.getElementById("video");
+const status = document.getElementById("status");
+const startButton = document.getElementById("startButton");
 
-// АДРЕСА КАЛЬКУЛЯТОРА
+const formats = [
+  BarcodeFormat.EAN_13,
+  BarcodeFormat.EAN_8,
+  BarcodeFormat.CODE_128,
+  BarcodeFormat.CODE_39,
+  BarcodeFormat.CODE_93,
+  BarcodeFormat.ITF,
+  BarcodeFormat.CODABAR,
+  BarcodeFormat.UPC_A,
+  BarcodeFormat.UPC_E,
+  BarcodeFormat.QR_CODE,
+  BarcodeFormat.DATA_MATRIX
+];
+
+const hints = new Map();
+
+hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
+hints.set(DecodeHintType.TRY_HARDER, true);
+hints.set(DecodeHintType.ALSO_INVERTED, true);
 
 function getReturnUrl() {
-
   if (!returnUrl) return null;
 
   try {
-
     const url = new URL(returnUrl);
 
     if (
-      url.protocol !== 'https:' ||
-      url.hostname !== 'script.google.com' ||
-      !url.pathname.startsWith('/macros/s/') ||
-      !url.pathname.endsWith('/exec')
-    ) return null;
+      url.protocol !== "https:" ||
+      url.hostname !== "script.google.com" ||
+      !url.pathname.startsWith("/macros/s/") ||
+      !url.pathname.endsWith("/exec")
+    ) {
+      return null;
+    }
 
     return url.origin + url.pathname;
-
-  } catch(e) {
+  } catch (e) {
     return null;
   }
-
 }
 
-
-// ПОВІДОМЛЕННЯ
-
-function showError(text) {
-
-  const el = document.getElementById('message');
-
-  el.className = 'error';
+function showMessage(text, type = "success") {
+  const el = document.getElementById("message");
+  el.className = type;
   el.textContent = text;
-
 }
 
-function showSuccess(text) {
-
-  const el = document.getElementById('message');
-
-  el.className = 'success';
-  el.textContent = text;
-
+function clearMessage() {
+  const el = document.getElementById("message");
+  el.className = "";
+  el.textContent = "";
 }
 
+function stopCamera() {
+  if (controls) {
+    try { controls.stop(); } catch(e) {}
+    controls = null;
+  }
 
-// ПОВЕРНЕННЯ
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
+    video.srcObject = null;
+  }
+
+  currentTrack = null;
+  torchOn = false;
+  zoomOn = false;
+
+  document.getElementById("torchButton").disabled = true;
+  document.getElementById("zoomButton").disabled = true;
+}
+
+function deliverCode(code) {
+  if (locked || !code) return;
+
+  const value = String(code).trim();
+  if (!value) return;
+
+  const url = getReturnUrl();
+
+  if (!url) {
+    showMessage(
+      "Не вдалося визначити адресу калькулятора.",
+      "error"
+    );
+    return;
+  }
+
+  locked = true;
+  status.textContent = "Штрихкод успішно розпізнано!";
+
+  showMessage("Зчитаний код: " + value);
+
+  stopCamera();
+
+  const destination = new URL(url);
+  destination.searchParams.set("barcode", value);
+
+  setTimeout(() => {
+    location.replace(destination.toString());
+  }, 600);
+}
+
+async function startScanner() {
+  if (starting || locked) return;
+
+  starting = true;
+  startButton.hidden = true;
+  clearMessage();
+
+  try {
+    if (
+      !window.isSecureContext ||
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia
+    ) {
+      throw new Error(
+        "Камера недоступна. Відкрийте сторінку через Safari або Chrome."
+      );
+    }
+
+    stopCamera();
+
+    status.textContent = "Запуск задньої камери...";
+
+    reader = new BrowserMultiFormatReader(hints, {
+      delayBetweenScanAttempts: 100,
+      delayBetweenScanSuccess: 500
+    });
+
+    controls = await reader.decodeFromConstraints(
+      {
+        audio: false,
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      },
+      video,
+      (result, error) => {
+        if (result) {
+          deliverCode(result.getText());
+        }
+      }
+    );
+
+    if (locked) {
+      stopCamera();
+      return;
+    }
+
+    const stream = video.srcObject;
+
+    if (stream) {
+      currentTrack = stream.getVideoTracks()[0];
+    }
+
+    if (currentTrack) {
+      const capabilities =
+        currentTrack.getCapabilities?.() || {};
+
+      if (capabilities.torch) {
+        document.getElementById("torchButton").disabled = false;
+      }
+
+      if (capabilities.zoom) {
+        document.getElementById("zoomButton").disabled = false;
+      }
+
+      try {
+        const advanced = [];
+
+        if (capabilities.focusMode?.includes("continuous")) {
+          advanced.push({ focusMode: "continuous" });
+        }
+
+        if (advanced.length) {
+          await currentTrack.applyConstraints({ advanced });
+        }
+      } catch(e) {
+        console.log("Автофокус недоступний:", e);
+      }
+    }
+
+    status.textContent =
+      "Камера активна. Наведіть на штрихкод.";
+
+    showMessage(
+      "Сканер готовий. Тримайте штрихкод рівно, " +
+      "на відстані приблизно 10–20 см від камери."
+    );
+
+  } catch(error) {
+    console.error(error);
+    stopCamera();
+
+    status.textContent = "Не вдалося запустити сканер.";
+
+    let message = error.message || "Невідома помилка.";
+
+    if (error.name === "NotAllowedError") {
+      message = "Дозвольте доступ до камери в браузері.";
+    }
+
+    if (error.name === "NotFoundError") {
+      message = "Камеру смартфона не знайдено.";
+    }
+
+    if (error.name === "NotReadableError") {
+      message = "Камера використовується іншою програмою.";
+    }
+
+    showMessage(message, "error");
+    startButton.hidden = false;
+    startButton.textContent = "СПРОБУВАТИ ЩЕ РАЗ";
+
+  } finally {
+    starting = false;
+  }
+}
+
+async function toggleTorch() {
+  if (!currentTrack) return;
+
+  try {
+    torchOn = !torchOn;
+
+    await currentTrack.applyConstraints({
+      advanced: [{ torch: torchOn }]
+    });
+
+    document.getElementById("torchButton").textContent =
+      torchOn ? "ВИМКНУТИ СВІТЛО" : "ЛІХТАРИК";
+
+  } catch(e) {
+    torchOn = false;
+    showMessage(
+      "Ліхтарик недоступний на цьому пристрої.",
+      "error"
+    );
+  }
+}
+
+async function toggleZoom() {
+  if (!currentTrack) return;
+
+  try {
+    const caps = currentTrack.getCapabilities?.() || {};
+    if (!caps.zoom) return;
+
+    zoomOn = !zoomOn;
+
+    const target = zoomOn
+      ? Math.min(2, caps.zoom.max)
+      : caps.zoom.min;
+
+    await currentTrack.applyConstraints({
+      advanced: [{ zoom: target }]
+    });
+
+    document.getElementById("zoomButton").textContent =
+      zoomOn ? "ЗВИЧАЙНИЙ МАСШТАБ" : "ЗБІЛЬШЕННЯ";
+
+  } catch(e) {
+    zoomOn = false;
+    showMessage(
+      "Збільшення недоступне на цьому пристрої.",
+      "error"
+    );
+  }
+}
+
+function openPhoto() {
+  document.getElementById("photoInput").click();
+}
+
+async function scanPhoto(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  status.textContent = "Розпізнавання фотографії...";
+
+  const imageUrl = URL.createObjectURL(file);
+
+  try {
+    const photoReader = new BrowserMultiFormatReader(hints);
+
+    const result = await photoReader.decodeFromImageUrl(imageUrl);
+
+    if (result) {
+      deliverCode(result.getText());
+    } else {
+      throw new Error("Штрихкод не знайдено.");
+    }
+
+  } catch(e) {
+    status.textContent = "Штрихкод не розпізнано.";
+
+    showMessage(
+      "Не вдалося розпізнати штрихкод на фото. " +
+      "Спробуйте зробити чіткіший знімок без відблисків.",
+      "error"
+    );
+
+  } finally {
+    URL.revokeObjectURL(imageUrl);
+    event.target.value = "";
+  }
+}
+
+function submitManual() {
+  const code = document.getElementById("manualCode").value.trim();
+
+  if (!code) {
+    showMessage("Введіть код товару.", "error");
+    return;
+  }
+
+  deliverCode(code);
+}
 
 function goBack() {
+  stopCamera();
 
   const url = getReturnUrl();
 
@@ -261,202 +633,30 @@ function goBack() {
   } else {
     history.back();
   }
-
 }
 
-
-// ЗУПИНКА
-
-function stopCamera() {
-
-  if (controls) {
-    controls.stop();
-    controls = null;
-  }
-
-}
-
-
-// ОБРОБКА ШТРИХКОДУ
-
-function onCodeDetected(result) {
-
-  if (locked || !result) return;
-
-  const code = String(result.getText()).trim();
-
-  if (!code) return;
-
-  locked = true;
-
-  document.getElementById('status').textContent =
-    'Штрихкод успішно розпізнано!';
-
-  showSuccess(
-    'Зчитаний код: ' + code +
-    '. Повертаємося до калькулятора...'
-  );
-
-  stopCamera();
-
-  const url = getReturnUrl();
-
-  if (!url) {
-
-    showError('Не вдалося визначити адресу калькулятора.');
-
-    locked = false;
-    return;
-
-  }
-
-  const destination =
-    url + '?barcode=' + encodeURIComponent(code);
-
-  setTimeout(function() {
-    location.replace(destination);
-  }, 500);
-
-}
-
-
-// ЗАПУСК СКАНЕРА
-
-async function startScanner() {
-
-  if (starting || locked) return;
-
-  starting = true;
-
-  const button = document.getElementById('startButton');
-  const status = document.getElementById('status');
-
-  button.hidden = true;
-
-  try {
-
-    if (!window.isSecureContext ||
-        !navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia) {
-
-      throw new Error(
-        'Камера недоступна. Відкрийте сторінку через Safari або Chrome.'
-      );
-
-    }
-
-    status.textContent = 'Завантаження системи розпізнавання...';
-
-    // ЗАВАНТАЖЕННЯ ZXING
-
-    const ZXing = await import(
-      'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/+esm'
-    );
-
-    reader = new ZXing.BrowserMultiFormatReader();
-
-    status.textContent = 'Запуск задньої камери...';
-
-    const video = document.getElementById('video');
-
-    // ВИБІР ЗАДНЬОЇ КАМЕРИ ТА ПОСТІЙНЕ РОЗПІЗНАВАННЯ
-
-    controls = await reader.decodeFromConstraints(
-
-      {
-        audio: false,
-
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
-
-      },
-
-      video,
-
-      function(result, error, scanControls) {
-
-        if (result) {
-          onCodeDetected(result);
-        }
-
-      }
-
-    );
-
-    await video.play();
-
-    status.textContent =
-      'Камера активна. Наведіть її на штрихкод.';
-
-    showSuccess(
-      'Сканер готовий. Наведіть камеру на штрихкод і тримайте смартфон нерухомо.'
-    );
-
-  } catch(error) {
-
-    console.error(error);
-
-    stopCamera();
-
-    status.textContent = 'Не вдалося запустити сканер.';
-
-    let message = error.message || 'Невідома помилка.';
-
-    if (error.name === 'NotAllowedError') {
-      message = 'Дозвольте доступ до камери в налаштуваннях браузера.';
-    }
-
-    if (error.name === 'NotFoundError') {
-      message = 'Задню камеру смартфона не знайдено.';
-    }
-
-    if (error.name === 'NotReadableError') {
-      message = 'Камера використовується іншою програмою.';
-    }
-
-    showError(message);
-
-    button.hidden = false;
-    button.textContent = 'СПРОБУВАТИ ЩЕ РАЗ';
-
-  } finally {
-
-    starting = false;
-
-  }
-
-}
-
-
-// ЗАКРИТТЯ СТОРІНКИ
-
-window.addEventListener('pagehide', function() {
-  stopCamera();
-});
-
-
-// АВТОЗАПУСК
-
-window.addEventListener('load', function() {
-
+window.startScanner = startScanner;
+window.toggleTorch = toggleTorch;
+window.toggleZoom = toggleZoom;
+window.openPhoto = openPhoto;
+window.scanPhoto = scanPhoto;
+window.submitManual = submitManual;
+window.goBack = goBack;
+
+window.addEventListener("pagehide", stopCamera);
+
+window.addEventListener("load", () => {
   if (!getReturnUrl()) {
-
-    showError(
-      'Відкрийте сканер через кнопку в калькуляторі Trend Protection.'
+    showMessage(
+      "Відкрийте сканер через кнопку в калькуляторі Trend Protection.",
+      "error"
     );
 
-    document.getElementById('status').textContent =
-      'Немає адреси повернення.';
-
+    status.textContent = "Немає адреси повернення.";
     return;
-
   }
 
   startScanner();
-
 });
 
 </script>
