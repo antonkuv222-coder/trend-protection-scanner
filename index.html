@@ -3,663 +3,460 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Trend Protection Scanner</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trend Protection Scanner 3.0</title>
 <style>
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  padding: 12px;
-  min-height: 100vh;
-  background: #f5f5f5;
-  font-family: Arial, sans-serif;
-  color: #151515;
-}
-
-.container {
-  max-width: 550px;
-  margin: 0 auto;
-}
-
-.header {
-  background: linear-gradient(120deg,#fff 45%,#ffda00);
-  padding: 25px;
-  border-radius: 22px;
-  margin-bottom: 20px;
-}
-
-.logo {
-  font-size: 20px;
-  font-weight: 1000;
-  margin-bottom: 24px;
-}
-
-h1 {
-  font-size: 29px;
-  line-height: 1;
-  margin: 0;
-}
-
-.card {
-  background: white;
-  border-radius: 20px;
-  padding: 22px;
-  box-shadow: 0 8px 30px rgba(0,0,0,.05);
-}
-
-.description {
-  color: #777;
-  line-height: 1.5;
-  font-size: 14px;
-  margin-bottom: 18px;
-}
-
-.camera-box {
-  width: 100%;
-  aspect-ratio: 4 / 5;
-  background: #111;
-  border-radius: 15px;
-  overflow: hidden;
-  position: relative;
-}
-
-#video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
-
-.scan-frame {
-  position: absolute;
-  left: 5%;
-  right: 5%;
-  top: 37%;
-  height: 26%;
-  border: 3px solid #ffda00;
-  border-radius: 12px;
-  pointer-events: none;
-  box-shadow: 0 0 0 100vmax rgba(0,0,0,.12);
-}
-
-.scan-line {
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  top: 50%;
-  height: 2px;
-  background: #ffda00;
-  opacity: .8;
-  pointer-events: none;
-}
-
-.status {
-  text-align: center;
-  padding: 16px 5px;
-  font-size: 14px;
-  color: #777;
-  line-height: 1.5;
-}
-
-button {
-  width: 100%;
-  border: 0;
-  border-radius: 13px;
-  padding: 17px;
-  background: #ffda00;
-  font-size: 15px;
-  font-weight: 900;
-  cursor: pointer;
-  margin-top: 14px;
-}
-
-button.dark {
-  background: #222;
-  color: white;
-}
-
-button.secondary {
-  background: #eee;
-  color: #222;
-}
-
-button:disabled {
-  opacity: .5;
-}
-
-.tools {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.tools button {
-  font-size: 13px;
-  padding: 14px 8px;
-}
-
-.error {
-  background: #ffe7e7;
-  color: #b00020;
-  padding: 14px;
-  border-radius: 12px;
-  margin-top: 15px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.success {
-  background: #e5f8e9;
-  color: #167532;
-  padding: 14px;
-  border-radius: 12px;
-  margin-top: 15px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.manual {
-  margin-top: 15px;
-  display: flex;
-  gap: 8px;
-}
-
-.manual input {
-  min-width: 0;
-  flex: 1;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 13px;
-  font-size: 16px;
-}
-
-.manual button {
-  width: auto;
-  margin: 0;
-  padding: 13px;
-}
-
-.footer {
-  text-align: center;
-  color: #999;
-  font-size: 11px;
-  padding: 20px;
-}
-
-@media(max-width:380px) {
-  .card { padding: 16px; }
-  .header { padding: 20px; }
-  h1 { font-size: 26px; }
-}
+*{box-sizing:border-box}
+body{margin:0;padding:12px;min-height:100vh;background:#f5f5f5;font-family:Arial,sans-serif;color:#151515}
+.container{max-width:550px;margin:auto}
+.header{background:linear-gradient(120deg,#fff 45%,#ffda00);padding:25px;border-radius:22px;margin-bottom:20px}
+.logo{font-size:20px;font-weight:900;margin-bottom:24px}
+h1{font-size:29px;line-height:1;margin:0}
+.card{background:white;border-radius:20px;padding:22px;box-shadow:0 8px 30px #0001}
+.description{color:#777;line-height:1.5;font-size:14px;margin-bottom:18px}
+.camera-box{width:100%;aspect-ratio:4/5;background:#111;border-radius:15px;overflow:hidden;position:relative}
+video{width:100%;height:100%;object-fit:contain;display:block}
+.scan-frame{position:absolute;left:5%;right:5%;top:35%;height:30%;border:3px solid #ffda00;border-radius:12px;pointer-events:none}
+.status{text-align:center;padding:16px 5px;font-size:14px;color:#777;line-height:1.5}
+button{width:100%;border:0;border-radius:13px;padding:16px;background:#ffda00;font-size:14px;font-weight:900;cursor:pointer;margin-top:12px}
+button.dark{background:#222;color:white}
+button.secondary{background:#eee;color:#222}
+button:disabled{opacity:.45}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tools button{padding:13px 5px;font-size:12px}
+.message{padding:14px;border-radius:12px;margin-top:12px;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.error{background:#ffe7e7;color:#b00020}
+.success{background:#e5f8e9;color:#167532}
+.manual{display:flex;gap:8px;margin-top:15px}
+.manual input{flex:1;min-width:0;padding:13px;border:1px solid #ddd;border-radius:12px;font-size:16px}
+.manual button{width:auto;margin:0;padding:13px}
+.footer{text-align:center;color:#999;font-size:11px;padding:20px}
+#ocrPanel{display:none;margin-top:12px}
+#ocrPanel input{width:100%;padding:12px;border:1px solid #ddd;border-radius:12px;font-size:16px}
+@media(max-width:380px){.card{padding:16px}.header{padding:20px}h1{font-size:26px}}
 </style>
 </head>
-
 <body>
-
 <div class="container">
-
-  <div class="header">
-    <div class="logo">◆ MOBILE TREND</div>
-    <h1>TREND<br>PROTECTION</h1>
+ <div class="header">
+  <div class="logo">◆ MOBILE TREND</div>
+  <h1>TREND<br>PROTECTION</h1>
+ </div>
+ <div class="card">
+  <h2>Сканування товару</h2>
+  <div class="description">
+   Наведіть камеру на штрихкод товару.
+   Підтримуються етикетки та штрихкоди з екранів
+   інших пристроїв. Якщо лінії пошкоджені,
+   спробуйте фото або розпізнавання цифр.
   </div>
-
-  <div class="card">
-
-    <h2>Сканування товару</h2>
-
-    <div class="description">
-      Наведіть задню камеру смартфона на штрихкод
-      товару Mobile Trend. Розмістіть усі лінії
-      штрихкоду в жовтій рамці.
-      Після зчитування ви автоматично повернетеся
-      до калькулятора.
-    </div>
-
-    <div class="camera-box">
-      <video id="video" autoplay muted playsinline></video>
-      <div class="scan-frame"></div>
-      <div class="scan-line"></div>
-    </div>
-
-    <div class="status" id="status">
-      Підготовка камери...
-    </div>
-
-    <div id="message"></div>
-
-    <button id="startButton" onclick="startScanner()" hidden>
-      УВІМКНУТИ КАМЕРУ
-    </button>
-
-    <div class="tools">
-      <button class="secondary" id="torchButton"
-              onclick="toggleTorch()" disabled>
-        ЛІХТАРИК
-      </button>
-
-      <button class="secondary" id="zoomButton"
-              onclick="toggleZoom()" disabled>
-        ЗБІЛЬШЕННЯ
-      </button>
-    </div>
-
-    <button class="secondary" onclick="openPhoto()">
-      СКАНУВАТИ З ФОТО
-    </button>
-
-    <input type="file"
-           id="photoInput"
-           accept="image/*"
-           hidden
-           onchange="scanPhoto(event)">
-
-    <div class="manual">
-      <input id="manualCode"
-             type="text"
-             inputmode="numeric"
-             placeholder="Ввести код вручну">
-      <button onclick="submitManual()">OK</button>
-    </div>
-
-    <button class="dark" onclick="goBack()">
-      ПОВЕРНУТИСЯ ДО КАЛЬКУЛЯТОРА
-    </button>
-
+  <div class="camera-box">
+   <video id="video" autoplay muted playsinline></video>
+   <div class="scan-frame"></div>
   </div>
-
-  <div class="footer">
-    MOBILE TREND © TREND PROTECTION
+  <div class="status" id="status">Підготовка сканера...</div>
+  <div id="message"></div>
+  <button id="startButton" hidden>УВІМКНУТИ КАМЕРУ</button>
+  <div class="tools">
+   <button class="secondary" id="torchButton" disabled>ЛІХТАРИК</button>
+   <button class="secondary" id="zoomButton" disabled>ЗБІЛЬШЕННЯ</button>
   </div>
-
+  <button class="secondary" id="photoButton">СКАНУВАТИ З ФОТО</button>
+  <button class="secondary" id="ocrButton">РОЗПІЗНАТИ ЦИФРИ З ФОТО</button>
+  <input id="photoInput" type="file" accept="image/*" hidden>
+  <div id="ocrPanel">
+   <p>Перевірте розпізнані цифри перед пошуком:</p>
+   <input id="ocrResult" inputmode="numeric" placeholder="Номер товару">
+   <button id="confirmOcr">ПІДТВЕРДИТИ НОМЕР</button>
+  </div>
+  <div class="manual">
+   <input id="manualCode" type="text" inputmode="numeric" placeholder="Ввести код вручну">
+   <button id="manualButton">OK</button>
+  </div>
+  <button class="dark" id="backButton">ПОВЕРНУТИСЯ ДО КАЛЬКУЛЯТОРА</button>
+ </div>
+ <div class="footer">MOBILE TREND © TREND PROTECTION</div>
 </div>
 
 <script type="module">
+const $=id=>document.getElementById(id);
+const video=$('video'),status=$('status');
+const params=new URLSearchParams(location.search),returnUrl=params.get('return');
+let stream=null,track=null,active=false,busy=false,locked=false,torch=false,zoom=false,photoMode='barcode',frameTimer=null;
+let zbar=null,zxing=null,nativeDetector=null,ocrLib=null;
+const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
 
-import {
-  BrowserMultiFormatReader
-} from "https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/+esm";
-
-import {
-  DecodeHintType,
-  BarcodeFormat
-} from "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/+esm";
-
-let reader = null;
-let controls = null;
-let locked = false;
-let starting = false;
-let torchOn = false;
-let zoomOn = false;
-let currentTrack = null;
-
-const params = new URLSearchParams(location.search);
-const returnUrl = params.get("return");
-
-const video = document.getElementById("video");
-const status = document.getElementById("status");
-const startButton = document.getElementById("startButton");
-
-const formats = [
-  BarcodeFormat.EAN_13,
-  BarcodeFormat.EAN_8,
-  BarcodeFormat.CODE_128,
-  BarcodeFormat.CODE_39,
-  BarcodeFormat.CODE_93,
-  BarcodeFormat.ITF,
-  BarcodeFormat.CODABAR,
-  BarcodeFormat.UPC_A,
-  BarcodeFormat.UPC_E,
-  BarcodeFormat.QR_CODE,
-  BarcodeFormat.DATA_MATRIX
-];
-
-const hints = new Map();
-
-hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
-hints.set(DecodeHintType.TRY_HARDER, true);
-hints.set(DecodeHintType.ALSO_INVERTED, true);
-
-function getReturnUrl() {
-  if (!returnUrl) return null;
-
-  try {
-    const url = new URL(returnUrl);
-
-    if (
-      url.protocol !== "https:" ||
-      url.hostname !== "script.google.com" ||
-      !url.pathname.startsWith("/macros/s/") ||
-      !url.pathname.endsWith("/exec")
-    ) {
-      return null;
-    }
-
-    return url.origin + url.pathname;
-  } catch (e) {
-    return null;
-  }
+function message(text,error=false){
+ $('message').className='message '+(error?'error':'success');
+ $('message').textContent=text;
 }
 
-function showMessage(text, type = "success") {
-  const el = document.getElementById("message");
-  el.className = type;
-  el.textContent = text;
+function getReturnUrl(){
+ if(!returnUrl)return null;
+ try{
+  const u=new URL(returnUrl);
+  if(u.protocol!=='https:'||
+     u.hostname!=='script.google.com'||
+     !u.pathname.startsWith('/macros/s/')||
+     !u.pathname.endsWith('/exec'))return null;
+  return u.origin+u.pathname;
+ }catch{return null}
 }
 
-function clearMessage() {
-  const el = document.getElementById("message");
-  el.className = "";
-  el.textContent = "";
+function deliver(code){
+ const value=String(code||'').trim();
+ if(!value||locked)return;
+ const base=getReturnUrl();
+ if(!base){
+  message('Не знайдено адресу калькулятора.',true);
+  return;
+ }
+ locked=true;
+ stop();
+ status.textContent='Штрихкод розпізнано!';
+ message('Зчитаний код: '+value+'. Повертаємося до калькулятора...');
+ const u=new URL(base);
+ u.searchParams.set('barcode',value);
+ setTimeout(()=>location.replace(u.toString()),600);
 }
 
-function stopCamera() {
-  if (controls) {
-    try { controls.stop(); } catch(e) {}
-    controls = null;
-  }
-
-  if (video.srcObject) {
-    video.srcObject.getTracks().forEach(track => track.stop());
-    video.srcObject = null;
-  }
-
-  currentTrack = null;
-  torchOn = false;
-  zoomOn = false;
-
-  document.getElementById("torchButton").disabled = true;
-  document.getElementById("zoomButton").disabled = true;
+function stop(){
+ active=false;
+ if(frameTimer!==null){
+  clearTimeout(frameTimer);
+  frameTimer=null;
+ }
+ if(stream){
+  stream.getTracks().forEach(t=>t.stop());
+  stream=null;
+ }
+ video.srcObject=null;
+ track=null;
+ torch=false;
+ zoom=false;
+ $('torchButton').disabled=true;
+ $('zoomButton').disabled=true;
 }
 
-function deliverCode(code) {
-  if (locked || !code) return;
+async function loadDecoders(){
+ const attempts=await Promise.allSettled([
+  import('https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.11.0/dist/inlined/index.mjs'),
+  import('https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/+esm')
+ ]);
+ if(attempts[0].status==='fulfilled')
+  zbar=attempts[0].value;
+ else console.warn('ZBar:',attempts[0].reason);
 
-  const value = String(code).trim();
-  if (!value) return;
+ if(attempts[1].status==='fulfilled'){
+  const lib=attempts[1].value;
+  const hints=new Map();
+  hints.set(lib.DecodeHintType.TRY_HARDER,true);
+  hints.set(lib.DecodeHintType.ALSO_INVERTED,true);
+  const reader=new lib.MultiFormatReader();
+  reader.setHints(hints);
+  zxing={lib,reader,hints};
+ }else console.warn('ZXing:',attempts[1].reason);
 
-  const url = getReturnUrl();
+ if('BarcodeDetector' in window){
+  try{
+   const supported=await BarcodeDetector.getSupportedFormats();
+   const formats=[
+    'code_128','code_39','code_93',
+    'ean_13','ean_8','itf','codabar',
+    'upc_a','upc_e','qr_code','data_matrix'
+   ].filter(f=>supported.includes(f));
+   if(formats.length)
+    nativeDetector=new BarcodeDetector({formats});
+  }catch(e){console.warn(e)}
+ }
+ if(!zbar&&!zxing&&!nativeDetector)
+  throw new Error('Не вдалося завантажити бібліотеки сканування. Перевірте інтернет та оновіть сторінку.');
+}
 
-  if (!url) {
-    showMessage(
-      "Не вдалося визначити адресу калькулятора.",
-      "error"
-    );
+function scaleCanvas(source,maxWidth=1600){
+ const w=source.videoWidth||source.naturalWidth||source.width;
+ const h=source.videoHeight||source.naturalHeight||source.height;
+ const s=Math.min(1,maxWidth/w);
+ canvas.width=Math.max(1,Math.round(w*s));
+ canvas.height=Math.max(1,Math.round(h*s));
+ ctx.drawImage(source,0,0,canvas.width,canvas.height);
+ return canvas;
+}
+
+function variants(source,heavy){
+ const variants=[source];
+ if(!heavy)return variants;
+ const c=document.createElement('canvas');
+ c.width=source.width;
+ c.height=source.height;
+ const x=c.getContext('2d',{willReadFrequently:true});
+ x.drawImage(source,0,0);
+ const image=x.getImageData(0,0,c.width,c.height);
+ for(let i=0;i<image.data.length;i+=4){
+  const d=image.data;
+  const v=Math.max(0,Math.min(255,
+   (d[i]*.299+d[i+1]*.587+d[i+2]*.114-128)*1.7+128
+  ));
+  d[i]=d[i+1]=d[i+2]=v;
+ }
+ x.putImageData(image,0,0);
+ variants.push(c);
+ return variants;
+}
+
+async function decodeOne(c,heavy=false){
+ if(nativeDetector){
+  try{
+   const hits=await nativeDetector.detect(c);
+   if(hits.length)return hits[0].rawValue;
+  }catch(e){}
+ }
+ if(zbar){
+  try{
+   const x=c.getContext('2d',{willReadFrequently:true});
+   const hits=await zbar.scanImageData(
+    x.getImageData(0,0,c.width,c.height)
+   );
+   if(hits.length)return hits[0].decode();
+  }catch(e){console.warn('ZBar frame:',e)}
+ }
+ if(zxing){
+  try{
+   const {lib,reader,hints}=zxing;
+   const x=c.getContext('2d',{willReadFrequently:true});
+   const data=x.getImageData(0,0,c.width,c.height);
+   const source=new lib.RGBLuminanceSource(data.data,c.width,c.height);
+   for(const B of [
+    lib.HybridBinarizer,
+    lib.GlobalHistogramBinarizer
+   ]){
+    try{
+     const bitmap=new lib.BinaryBitmap(new B(source));
+     return reader.decode(bitmap,hints).getText();
+    }catch(e){}
+    finally{reader.reset()}
+   }
+  }catch(e){}
+ }
+ return null;
+}
+
+async function decodeImage(source,heavy=false){
+ for(const v of variants(source,heavy)){
+  const found=await decodeOne(v,heavy);
+  if(found)return found;
+ }
+ return null;
+}
+
+async function scanLoop(){
+ if(!active||locked)return;
+ if(busy){
+  frameTimer=setTimeout(scanLoop,100);
+  return;
+ }
+ busy=true;
+ try{
+  if(video.readyState>=2){
+   const frame=scaleCanvas(video,1600);
+   const code=await decodeImage(frame,Math.random()<.35);
+   if(code){
+    deliver(code);
     return;
+   }
   }
-
-  locked = true;
-  status.textContent = "Штрихкод успішно розпізнано!";
-
-  showMessage("Зчитаний код: " + value);
-
-  stopCamera();
-
-  const destination = new URL(url);
-  destination.searchParams.set("barcode", value);
-
-  setTimeout(() => {
-    location.replace(destination.toString());
-  }, 600);
+ }catch(e){console.warn(e)}
+ finally{busy=false}
+ if(active&&!locked)
+  frameTimer=setTimeout(scanLoop,130);
 }
 
-async function startScanner() {
-  if (starting || locked) return;
+async function start(){
+ if(active||locked)return;
+ $('startButton').hidden=true;
+ status.textContent='Завантаження сканера...';
+ try{
+  if(!window.isSecureContext||
+     !navigator.mediaDevices?.getUserMedia)
+   throw new Error('Камера недоступна. Відкрийте сайт через Safari або Chrome.');
 
-  starting = true;
-  startButton.hidden = true;
-  clearMessage();
+  await loadDecoders();
+  status.textContent='Запуск задньої камери...';
+  stream=await navigator.mediaDevices.getUserMedia({
+   audio:false,
+   video:{
+    facingMode:{ideal:'environment'},
+    width:{ideal:1920},
+    height:{ideal:1080}
+   }
+  });
+  video.srcObject=stream;
+  await video.play();
+  track=stream.getVideoTracks()[0];
+  const caps=track.getCapabilities?.()||{};
+  $('torchButton').disabled=!caps.torch;
+  $('zoomButton').disabled=!caps.zoom;
 
-  try {
-    if (
-      !window.isSecureContext ||
-      !navigator.mediaDevices ||
-      !navigator.mediaDevices.getUserMedia
-    ) {
-      throw new Error(
-        "Камера недоступна. Відкрийте сторінку через Safari або Chrome."
-      );
-    }
-
-    stopCamera();
-
-    status.textContent = "Запуск задньої камери...";
-
-    reader = new BrowserMultiFormatReader(hints, {
-      delayBetweenScanAttempts: 100,
-      delayBetweenScanSuccess: 500
+  if(caps.focusMode?.includes('continuous')){
+   try{
+    await track.applyConstraints({
+     advanced:[{focusMode:'continuous'}]
     });
+   }catch(e){}
+  }
 
-    controls = await reader.decodeFromConstraints(
-      {
-        audio: false,
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
-      },
-      video,
-      (result, error) => {
-        if (result) {
-          deliverCode(result.getText());
-        }
-      }
+  active=true;
+  status.textContent='Камера активна. Наведіть на штрихкод.';
+  message('Сканер готовий. Тримайте етикетку рівно, спробуйте різні відстані. Для екрана іншого смартфона зменште відблиски.');
+  scanLoop();
+ }catch(e){
+  console.error(e);
+  stop();
+  status.textContent='Не вдалося запустити сканер.';
+  message(
+   e.name==='NotAllowedError'
+   ?'Дозвольте доступ до камери.'
+   :e.message,true
+  );
+  $('startButton').hidden=false;
+  $('startButton').textContent='СПРОБУВАТИ ЩЕ РАЗ';
+ }
+}
+
+async function toggleTorch(){
+ if(!track)return;
+ try{
+  torch=!torch;
+  await track.applyConstraints({advanced:[{torch}]});
+  $('torchButton').textContent=
+   torch?'ВИМКНУТИ СВІТЛО':'ЛІХТАРИК';
+ }catch(e){
+  torch=false;
+  message('Ліхтарик недоступний.',true);
+ }
+}
+
+async function toggleZoom(){
+ if(!track)return;
+ try{
+  const caps=track.getCapabilities();
+  if(!caps.zoom)return;
+  zoom=!zoom;
+  const target=zoom
+   ?Math.max(caps.zoom.min,Math.min(2,caps.zoom.max))
+   :caps.zoom.min;
+  await track.applyConstraints({advanced:[{zoom:target}]});
+  $('zoomButton').textContent=
+   zoom?'ЗВИЧАЙНИЙ МАСШТАБ':'ЗБІЛЬШЕННЯ';
+ }catch(e){
+  zoom=false;
+  message('Збільшення недоступне.',true);
+ }
+}
+
+function openPhoto(mode){
+ photoMode=mode;
+ $('photoInput').click();
+}
+
+async function processPhoto(e){
+ const file=e.target.files?.[0];
+ if(!file)return;
+ const url=URL.createObjectURL(file);
+ try{
+  status.textContent=photoMode==='ocr'
+   ?'Розпізнаємо надруковані цифри...'
+   :'Розпізнаємо штрихкод з фото...';
+
+  const img=new Image();
+  img.src=url;
+  await img.decode();
+  const c=scaleCanvas(img,2200);
+
+  if(photoMode==='barcode'){
+   await loadDecoders();
+   const found=await decodeImage(c,true);
+   if(found)deliver(found);
+   else message(
+    'Штрихкод не знайдено. Спробуйте інше фото або розпізнавання цифр.',
+    true
+   );
+  }else{
+   if(!ocrLib){
+    ocrLib=await import(
+     'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js'
     );
+   }
+   const worker=await ocrLib.createWorker('eng');
+   let result;
+   try{
+    result=await worker.recognize(c);
+   }finally{
+    await worker.terminate();
+   }
 
-    if (locked) {
-      stopCamera();
-      return;
-    }
+   const matches=(
+    result.data.text.match(/\d[\d\s-]{5,24}\d/g)||[]
+   ).map(s=>s.replace(/\D/g,''));
 
-    const stream = video.srcObject;
+   const candidate=matches.sort(
+    (a,b)=>b.length-a.length
+   )[0]||'';
 
-    if (stream) {
-      currentTrack = stream.getVideoTracks()[0];
-    }
+   $('ocrPanel').style.display='block';
+   $('ocrResult').value=candidate;
 
-    if (currentTrack) {
-      const capabilities =
-        currentTrack.getCapabilities?.() || {};
-
-      if (capabilities.torch) {
-        document.getElementById("torchButton").disabled = false;
-      }
-
-      if (capabilities.zoom) {
-        document.getElementById("zoomButton").disabled = false;
-      }
-
-      try {
-        const advanced = [];
-
-        if (capabilities.focusMode?.includes("continuous")) {
-          advanced.push({ focusMode: "continuous" });
-        }
-
-        if (advanced.length) {
-          await currentTrack.applyConstraints({ advanced });
-        }
-      } catch(e) {
-        console.log("Автофокус недоступний:", e);
-      }
-    }
-
-    status.textContent =
-      "Камера активна. Наведіть на штрихкод.";
-
-    showMessage(
-      "Сканер готовий. Тримайте штрихкод рівно, " +
-      "на відстані приблизно 10–20 см від камери."
-    );
-
-  } catch(error) {
-    console.error(error);
-    stopCamera();
-
-    status.textContent = "Не вдалося запустити сканер.";
-
-    let message = error.message || "Невідома помилка.";
-
-    if (error.name === "NotAllowedError") {
-      message = "Дозвольте доступ до камери в браузері.";
-    }
-
-    if (error.name === "NotFoundError") {
-      message = "Камеру смартфона не знайдено.";
-    }
-
-    if (error.name === "NotReadableError") {
-      message = "Камера використовується іншою програмою.";
-    }
-
-    showMessage(message, "error");
-    startButton.hidden = false;
-    startButton.textContent = "СПРОБУВАТИ ЩЕ РАЗ";
-
-  } finally {
-    starting = false;
+   message(
+    candidate
+    ?'OCR знайшов можливий номер. Перевірте кожну цифру перед підтвердженням.'
+    :'OCR не знайшов номер. Введіть цифри вручну.',
+    !candidate
+   );
   }
+ }catch(err){
+  console.error(err);
+  message('Не вдалося обробити фото: '+err.message,true);
+ }finally{
+  URL.revokeObjectURL(url);
+  e.target.value='';
+  if(!locked)
+   status.textContent=active
+    ?'Камера активна.'
+    :'Очікування сканування.';
+ }
 }
 
-async function toggleTorch() {
-  if (!currentTrack) return;
+$('startButton').onclick=start;
+$('torchButton').onclick=toggleTorch;
+$('zoomButton').onclick=toggleZoom;
+$('photoButton').onclick=()=>openPhoto('barcode');
+$('ocrButton').onclick=()=>openPhoto('ocr');
+$('photoInput').onchange=processPhoto;
+$('confirmOcr').onclick=()=>deliver($('ocrResult').value);
+$('manualButton').onclick=()=>deliver($('manualCode').value);
 
-  try {
-    torchOn = !torchOn;
-
-    await currentTrack.applyConstraints({
-      advanced: [{ torch: torchOn }]
-    });
-
-    document.getElementById("torchButton").textContent =
-      torchOn ? "ВИМКНУТИ СВІТЛО" : "ЛІХТАРИК";
-
-  } catch(e) {
-    torchOn = false;
-    showMessage(
-      "Ліхтарик недоступний на цьому пристрої.",
-      "error"
-    );
-  }
-}
-
-async function toggleZoom() {
-  if (!currentTrack) return;
-
-  try {
-    const caps = currentTrack.getCapabilities?.() || {};
-    if (!caps.zoom) return;
-
-    zoomOn = !zoomOn;
-
-    const target = zoomOn
-      ? Math.min(2, caps.zoom.max)
-      : caps.zoom.min;
-
-    await currentTrack.applyConstraints({
-      advanced: [{ zoom: target }]
-    });
-
-    document.getElementById("zoomButton").textContent =
-      zoomOn ? "ЗВИЧАЙНИЙ МАСШТАБ" : "ЗБІЛЬШЕННЯ";
-
-  } catch(e) {
-    zoomOn = false;
-    showMessage(
-      "Збільшення недоступне на цьому пристрої.",
-      "error"
-    );
-  }
-}
-
-function openPhoto() {
-  document.getElementById("photoInput").click();
-}
-
-async function scanPhoto(event) {
-  const file = event.target.files?.[0];
-  if (!file) return;
-
-  status.textContent = "Розпізнавання фотографії...";
-
-  const imageUrl = URL.createObjectURL(file);
-
-  try {
-    const photoReader = new BrowserMultiFormatReader(hints);
-
-    const result = await photoReader.decodeFromImageUrl(imageUrl);
-
-    if (result) {
-      deliverCode(result.getText());
-    } else {
-      throw new Error("Штрихкод не знайдено.");
-    }
-
-  } catch(e) {
-    status.textContent = "Штрихкод не розпізнано.";
-
-    showMessage(
-      "Не вдалося розпізнати штрихкод на фото. " +
-      "Спробуйте зробити чіткіший знімок без відблисків.",
-      "error"
-    );
-
-  } finally {
-    URL.revokeObjectURL(imageUrl);
-    event.target.value = "";
-  }
-}
-
-function submitManual() {
-  const code = document.getElementById("manualCode").value.trim();
-
-  if (!code) {
-    showMessage("Введіть код товару.", "error");
-    return;
-  }
-
-  deliverCode(code);
-}
-
-function goBack() {
-  stopCamera();
-
-  const url = getReturnUrl();
-
-  if (url) {
-    location.replace(url);
-  } else {
-    history.back();
-  }
-}
-
-window.startScanner = startScanner;
-window.toggleTorch = toggleTorch;
-window.toggleZoom = toggleZoom;
-window.openPhoto = openPhoto;
-window.scanPhoto = scanPhoto;
-window.submitManual = submitManual;
-window.goBack = goBack;
-
-window.addEventListener("pagehide", stopCamera);
-
-window.addEventListener("load", () => {
-  if (!getReturnUrl()) {
-    showMessage(
-      "Відкрийте сканер через кнопку в калькуляторі Trend Protection.",
-      "error"
-    );
-
-    status.textContent = "Немає адреси повернення.";
-    return;
-  }
-
-  startScanner();
+$('manualCode').addEventListener('keydown',e=>{
+ if(e.key==='Enter')deliver(e.target.value);
 });
 
-</script>
+$('backButton').onclick=()=>{
+ stop();
+ const u=getReturnUrl();
+ if(u)location.replace(u);
+ else history.back();
+};
 
+window.addEventListener('pagehide',stop);
+
+if(getReturnUrl()){
+ start();
+}else{
+ status.textContent='Немає адреси повернення.';
+ message(
+  'Відкрийте сканер через кнопку в калькуляторі Trend Protection.',
+  true
+ );
+}
+</script>
 </body>
 </html>
